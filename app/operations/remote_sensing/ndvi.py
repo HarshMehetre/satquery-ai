@@ -23,7 +23,10 @@ class NDVIOperation(BaseOperation):
 
         input_id = operation.inputs[0]
 
-        if input_id not in context.inputs and input_id not in context.results:
+        if (
+            input_id not in context.inputs
+            and input_id not in context.results
+        ):
             raise KeyError(
                 f"Input '{input_id}' does not exist."
             )
