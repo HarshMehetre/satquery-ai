@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from app.executor.context import ExecutionContext
 from app.schemas.operation import Operation
 from app.schemas.result import OperationResult
 
@@ -13,13 +14,11 @@ class BaseOperation(ABC):
     def validate(
         self,
         operation: Operation,
-        context,
+        context: ExecutionContext,
     ) -> None:
         """
-        Validate whether the operation can be executed
-        in the current execution context.
-
-        Should raise an exception if validation fails.
+        Validate whether the operation can execute
+        in the current context.
         """
         pass
 
@@ -27,7 +26,7 @@ class BaseOperation(ABC):
     def execute(
         self,
         operation: Operation,
-        context,
+        context: ExecutionContext,
     ) -> OperationResult:
         """
         Execute the operation and return a structured result.
