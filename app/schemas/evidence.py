@@ -1,24 +1,23 @@
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 
 class Evidence(BaseModel):
-    source: str = Field(min_length=1)
+    """
+    Provenance information describing how a result was produced.
+    """
 
-    source_type: Literal[
-        "satellite",
-        "osm",
-        "model",
-        "gis",
-    ]
+    source: str
+
+    source_type: str
 
     acquisition_date: str | None = None
 
-    operation: str = Field(min_length=1)
+    operation: str
 
     parameters: dict[str, Any] = Field(
-        default_factory=dict
+        default_factory=dict,
     )
 
-    description: str = Field(min_length=1)
+    description: str | None = None
