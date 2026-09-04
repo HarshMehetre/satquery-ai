@@ -1,0 +1,97 @@
+# =========================
+# Python
+# =========================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# =========================
+# Environment / Secrets
+# =========================
+
+.env
+.env.*
+!.env.example
+
+# =========================
+# IDE / Editors
+# =========================
+
+.vscode/
+.idea/
+
+# =========================
+# Testing / Coverage
+# =========================
+
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# =========================
+# Type checking / linters
+# =========================
+
+.mypy_cache/
+.ruff_cache/
+.pyre/
+
+# =========================
+# Logs
+# =========================
+
+*.log
+logs/
+
+# =========================
+# OS
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+# SatQuery generated data
+# =========================
+
+data/
+outputs/
+cache/
+tmp/
+
+# Satellite imagery / raster files
+*.tif
+*.tiff
+*.jp2
+*.hdf
+*.h5
+
+# Geospatial temporary files
+*.gpkg
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+
+# =========================
+# Jupyter
+# =========================
+
+.ipynb_checkpoints/
