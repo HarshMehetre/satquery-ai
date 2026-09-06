@@ -1,25 +1,25 @@
 from app.operations.gis.area import AreaOperation
 from app.operations.gis.buffer import BufferOperation
 from app.operations.gis.intersection import IntersectionOperation
-from app.operations.gis.osm import OSMRetrievalOperation
 from app.operations.gis.project import ProjectToCRSOperation
 from app.operations.remote_sensing.change import TemporalDifferenceOperation
 from app.operations.remote_sensing.filter import VegetationLossOperation
 from app.operations.remote_sensing.ndvi import NDVIOperation
 from app.operations.remote_sensing.polygonize import RasterPolygonizeOperation
-from app.operations.satellite.retrieve import (
-    Sentinel2RetrievalOperation,
-)
 from app.registry.operations import OperationRegistry
 from tests.operations.mocks import (
     MockCombineOperation,
+    MockOSMRetrievalOperation,
     MockRasterSourceOperation,
+    MockSentinel2RetrievalOperation,
     MockSourceOperation,
     MockTransformOperation,
 )
 
 
-def create_mock_registry() -> OperationRegistry:
+def create_mock_registry(
+    osm_retrieval_operation=MockOSMRetrievalOperation,
+) -> OperationRegistry:
     registry = OperationRegistry()
 
     registry.register(
@@ -44,7 +44,7 @@ def create_mock_registry() -> OperationRegistry:
     
     registry.register(
         "get_satellite_imagery",
-        Sentinel2RetrievalOperation,
+        MockSentinel2RetrievalOperation,
     )
     
     registry.register(
@@ -69,7 +69,7 @@ def create_mock_registry() -> OperationRegistry:
     
     registry.register(
         "get_osm_features",
-        OSMRetrievalOperation,
+        osm_retrieval_operation,
     )
     
     registry.register(

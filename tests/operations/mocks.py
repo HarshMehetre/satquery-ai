@@ -180,3 +180,64 @@ class MockRasterSourceOperation(BaseOperation):
             data_type="raster",
             data=raster,
         )
+        
+class MockSentinel2RetrievalOperation(BaseOperation):
+    """Return a deterministic raster supplied through runtime inputs."""
+
+    def validate(
+        self,
+        operation: Operation,
+        context: ExecutionContext,
+    ) -> None:
+        if operation.inputs:
+            raise ValueError(
+                "MockSentinel2RetrievalOperation does not require inputs."
+            )
+
+    def execute(
+        self,
+        operation: Operation,
+        context: ExecutionContext,
+    ) -> OperationResult:
+        raster = context.get_runtime_input(operation.id)
+
+        return OperationResult(
+            id=operation.id,
+            type=operation.type,
+            data_type="raster",
+            data=raster,
+            metadata={
+                "source": "mock-sentinel-2",
+            },
+        )
+
+
+class MockOSMRetrievalOperation(BaseOperation):
+    """Return deterministic vector data supplied through runtime inputs."""
+
+    def validate(
+        self,
+        operation: Operation,
+        context: ExecutionContext,
+    ) -> None:
+        if operation.inputs:
+            raise ValueError(
+                "MockOSMRetrievalOperation does not require inputs."
+            )
+
+    def execute(
+        self,
+        operation: Operation,
+        context: ExecutionContext,
+    ) -> OperationResult:
+        features = context.get_runtime_input(operation.id)
+
+        return OperationResult(
+            id=operation.id,
+            type=operation.type,
+            data_type="vector",
+            data=features,
+            metadata={
+                "source": "mock-openstreetmap",
+            },
+        )

@@ -1879,3 +1879,45 @@ OSM highway features
 Semantic road-class filtering
         ↓
 Major-road GeoDataFrame
+
+### 11.5.3 — Retrieval Operations Integrated into Hero Pipeline
+
+Completed integration of external data retrieval into the deterministic hero execution graph.
+
+#### Changes
+
+- Added deterministic mock Sentinel-2 retrieval operation for tests.
+- Added deterministic mock OSM retrieval operation for tests.
+- Updated the test operation registry so retrieval operations can be mocked without changing production implementations.
+- Updated the hero `QueryPlan` to explicitly execute:
+  - `get_satellite_imagery` for 2024 Sentinel-2 data.
+  - `get_satellite_imagery` for 2026 Sentinel-2 data.
+  - `get_osm_features` for major-road retrieval.
+- Retrieval responses are now converted into `OperationResult` objects before downstream processing.
+- NDVI operations consume Sentinel-2 retrieval results through operation dependencies.
+- OSM results flow through CRS projection before metric buffering and spatial intersection.
+- Runtime inputs are now used as deterministic mock retrieval responses rather than bypassing the retrieval layer.
+- Added retrieval-operation override support to the test registry so individual integration tests can explicitly exercise production retrieval implementations when required.
+
+#### Hero Execution Graph
+
+```text
+Sentinel-2 2024 ──→ NDVI 2024 ──┐
+                                │
+Sentinel-2 2026 ──→ NDVI 2026 ──┤
+                                ↓
+                         Temporal Difference
+                                ↓
+                         Vegetation Loss
+                                ↓
+                           Polygonize
+                                ↓
+                         Project to CRS
+                                │
+OSM Major Roads ──→ Project to CRS
+                                ↓
+                           3 km Buffer
+                                ↓
+                           Intersection
+                                ↓
+                              Area

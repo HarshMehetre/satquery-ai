@@ -3,6 +3,7 @@ from pyproj import Transformer
 from shapely.geometry import box
 
 from app.executor.executor import Executor
+from app.operations.gis.osm import OSMRetrievalOperation
 from app.schemas.operation import Operation
 from app.schemas.query import AOI, DataInput, OutputSpec, QueryPlan
 from app.schemas.result import OperationResult
@@ -33,7 +34,9 @@ def create_vegetation_loss_gdf() -> gpd.GeoDataFrame:
 
 
 def test_full_gis_pipeline(monkeypatch) -> None:
-    registry = create_mock_registry()
+    registry = create_mock_registry(
+    osm_retrieval_operation=OSMRetrievalOperation,
+    )
 
     osm_operation = Operation(
         id="osm_roads",

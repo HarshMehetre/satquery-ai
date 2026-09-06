@@ -102,21 +102,53 @@ def create_hero_plan() -> QueryPlan:
         ],
         operations=[
             {
-                "id": "ndvi_2024",
-                "type": "calculate_ndvi",
-                "inputs": ["s2_2024"],
-                "parameters": {
-                    "red_band": "B4",
-                    "nir_band": "B8",
+            "id": "s2_2024",
+            "type": "get_satellite_imagery",
+            "parameters": {
+                "bbox": BBOX,
+                "start_date": "2024-01-01",
+                "end_date": "2024-12-31",
+                "max_cloud_coverage": 30,
+                "width": WIDTH,
+                "height": HEIGHT,
                 },
             },
             {
-                "id": "ndvi_2026",
-                "type": "calculate_ndvi",
-                "inputs": ["s2_2026"],
-                "parameters": {
-                    "red_band": "B4",
-                    "nir_band": "B8",
+            "id": "s2_2026",
+            "type": "get_satellite_imagery",
+            "parameters": {
+                "bbox": BBOX,
+                "start_date": "2026-01-01",
+                "end_date": "2026-12-31",
+                "max_cloud_coverage": 30,
+                "width": WIDTH,
+                "height": HEIGHT,
+                },
+            },
+            {
+            "id": "roads",
+            "type": "get_osm_features",
+            "parameters": {
+                "bbox": BBOX,
+                "feature_type": "roads",
+                },
+            },
+            {
+            "id": "ndvi_2024",
+            "type": "calculate_ndvi",
+            "inputs": ["s2_2024"],
+            "parameters": {
+                "red_band": "B4",
+                "nir_band": "B8",
+                },
+            },
+            {
+            "id": "ndvi_2026",
+            "type": "calculate_ndvi",
+            "inputs": ["s2_2026"],
+            "parameters": {
+                "red_band": "B4",
+                "nir_band": "B8",
                 },
             },
             {
@@ -217,16 +249,19 @@ def test_hero_pipeline_executes_end_to_end() -> None:
     )
 
     expected_operation_ids = {
-        "ndvi_2024",
-        "ndvi_2026",
-        "vegetation_change",
-        "vegetation_loss",
-        "loss_polygons",
-        "loss_projected",
-        "roads_projected",
-        "road_buffer",
-        "final",
-        "area",
+    "s2_2024",
+    "s2_2026",
+    "roads",
+    "ndvi_2024",
+    "ndvi_2026",
+    "vegetation_change",
+    "vegetation_loss",
+    "loss_polygons",
+    "loss_projected",
+    "roads_projected",
+    "road_buffer",
+    "final",
+    "area",
     }
 
     assert set(result.results) == expected_operation_ids
