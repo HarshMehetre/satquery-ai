@@ -197,3 +197,64 @@ def test_sentinel2_retrieval_populates_georeferencing(
     assert transform.e == -expected_y_resolution
     assert transform.c == bbox[0]
     assert transform.f == bbox[3]
+    
+def test_sentinel2_rejects_invalid_bbox() -> None:
+    context = create_context()
+    operation = create_operation()
+
+    operation.parameters["bbox"] = [73.1, 18.0, 73.0, 18.1]
+
+    with pytest.raises(ValueError, match="west < east"):
+        Sentinel2RetrievalOperation().execute(
+            operation,
+            context,
+        )
+
+
+def test_sentinel2_rejects_invalid_date_range() -> None:
+    context = create_context()
+    operation = create_operation()
+
+    operation.parameters["start_date"] = "2026-02-01"
+    operation.parameters["end_date"] = "2026-01-01"
+
+    with pytest.raises(
+        ValueError,
+        match="start_date must not be later",
+    ):
+        Sentinel2RetrievalOperation().execute(
+            operation,
+            context,
+        )
+
+
+def test_sentinel2_rejects_invalid_cloud_coverage() -> None:
+    context = create_context()
+    operation = create_operation()
+
+    operation.parameters["max_cloud_coverage"] = 101
+
+    with pytest.raises(
+        ValueError,
+        match="between 0 and 100",
+    ):
+        Sentinel2RetrievalOperation().execute(
+            operation,
+            context,
+        )
+
+
+def test_sentinel2_rejects_invalid_dimensions() -> None:
+    context = create_context()
+    operation = create_operation()
+
+    operation.parameters["width"] = 0
+
+    with pytest.raises(
+        ValueError,
+        match="positive integer",
+    ):
+        Sentinel2RetrievalOperation().execute(
+            operation,
+            context,
+        )

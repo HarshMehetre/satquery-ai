@@ -153,3 +153,90 @@ def test_osm_retrieval(
     assert result.metadata["source"] == "openstreetmap"
     assert result.metadata["feature_type"] == "roads"
     assert result.metadata["feature_count"] == 1
+    
+def test_major_road_filter_keeps_major_classes() -> None:
+    create_context()
+
+    features = gpd.GeoDataFrame(
+        {
+            "highway": [
+                "primary",
+                "secondary",
+                "residential",
+                "footway",
+            ],
+        },
+        geometry=[
+            LineString([(73.0, 18.0), (73.01, 18.01)]),
+            LineString([(73.01, 18.0), (73.02, 18.01)]),
+            LineString([(73.02, 18.0), (73.03, 18.01)]),
+            LineString([(73.03, 18.0), (73.04, 18.01)]),
+        ],
+        crs="EPSG:4326",
+    )
+
+    Operation(
+        id="roads",
+        type="get_osm_features",
+        inputs=[],
+        parameters={
+            "bbox": [73.0, 18.0, 73.1, 18.1],
+            "feature_type": "roads",
+        },
+    )
+
+    handler = OSMRetrievalOperation()
+
+    filtered = handler._filter_major_roads(features)
+
+    assert len(filtered) == 2
+    assert set(filtered["highway"]) == {
+        "primary",
+        "secondary",
+    }
+
+
+def test_major_road_filter_supports_list_values() -> None:
+    features = gpd.GeoDataFrame(
+        {
+            "highway": [
+                ["primary", "secondary"],
+                ["residential"],
+            ],
+        },
+        geometry=[
+            LineString([(73.0, 18.0), (73.01, 18.01)]),
+            LineString([(73.01, 18.0), (73.02, 18.01)]),
+        ],
+        crs="EPSG:4326",
+    )
+
+    handler = OSMRetrievalOperation()
+
+    filtered = handler._filter_major_roads(features)
+
+    assert len(filtered) == 1
+    assert filtered.iloc[0]["highway"] == [
+        "primary",
+        "secondary",
+    ]
+
+
+def test_major_road_filter_rejects_missing_highway_column() -> None:
+    features = gpd.GeoDataFrame(
+        {
+            "name": ["Road A"],
+        },
+        geometry=[
+            LineString([(73.0, 18.0), (73.01, 18.01)]),
+        ],
+        crs="EPSG:4326",
+    )
+
+    handler = OSMRetrievalOperation()
+
+    with pytest.raises(
+        ValueError,
+        match="highway",
+    ):
+        handler._filter_major_roads(features)

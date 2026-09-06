@@ -1835,3 +1835,47 @@ Rasterio emits `PendingDeprecationWarning` messages originating from its interna
 * [x] Ruff clean
 
 **Checkpoint: 11.4.2 COMPLETE**
+
+### 11.5.2 — OSM Retrieval & Major-Road Filtering
+
+Implemented the OpenStreetMap retrieval layer for geospatial reasoning.
+
+#### Implemented
+
+- Added OSM feature retrieval through OSMnx.
+- Added support for:
+  - Roads
+  - Buildings
+  - Waterways
+- Added bounding-box validation.
+- Added supported feature-type validation.
+- Added semantic filtering for major roads.
+- Major road classes currently include:
+  - motorway
+  - motorway_link
+  - trunk
+  - trunk_link
+  - primary
+  - primary_link
+  - secondary
+  - secondary_link
+- Added handling for OSM `highway` values represented as either strings or lists.
+- Added explicit failure handling when no OSM features are returned.
+- Added explicit failure handling when no major roads are found.
+- Preserved OSM source metadata and feature counts in `OperationResult`.
+
+#### Why This Matters
+
+The hero query requires reasoning about proximity to **major roads**, rather than arbitrary OSM road features.
+
+The retrieval layer now converts:
+
+```text
+Natural-language concept:
+"major roads"
+        ↓
+OSM highway features
+        ↓
+Semantic road-class filtering
+        ↓
+Major-road GeoDataFrame

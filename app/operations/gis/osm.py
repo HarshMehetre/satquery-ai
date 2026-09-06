@@ -10,12 +10,23 @@ from app.schemas.result import OperationResult
 
 
 class OSMRetrievalOperation(BaseOperation):
-    """Retrieve OpenStreetMap vector features for an area."""
+    """Retrieve OpenStreetMap features for an area."""
 
     FEATURE_TAGS: ClassVar[dict[str, dict[str, bool]]] = {
         "roads": {"highway": True},
         "buildings": {"building": True},
         "waterways": {"waterway": True},
+    }
+
+    MAJOR_ROAD_CLASSES: ClassVar[set[str]] = {
+        "motorway",
+        "motorway_link",
+        "trunk",
+        "trunk_link",
+        "primary",
+        "primary_link",
+        "secondary",
+        "secondary_link",
     }
 
     def validate(
@@ -28,20 +39,44 @@ class OSMRetrievalOperation(BaseOperation):
                 "OSMRetrievalOperation does not require inputs."
             )
 
-        if "feature_type" not in operation.parameters:
+        required_parameters = {
+            "bbox",
+            "feature_type",
+        }
+
+        missing_parameters = (
+            required_parameters - set(operation.parameters)
+        )
+
+        if missing_parameters:
             raise ValueError(
-                "Missing required parameter: 'feature_type'."
+                "Missing required parameters: "
+                f"{sorted(missing_parameters)}"
+            )
+
+        bbox = operation.parameters["bbox"]
+
+        if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
+            raise ValueError(
+                "bbox must contain four values: "
+                "[west, south, east, north]."
+            )
+
+        west, south, east, north = bbox
+
+        if west >= east or south >= north:
+            raise ValueError(
+                "Invalid bbox: west must be less than east "
+                "and south must be less than north."
             )
 
         feature_type = operation.parameters["feature_type"]
 
         if feature_type not in self.FEATURE_TAGS:
             raise ValueError(
-                "Unsupported OSM feature_type. "
-                "Supported values: roads, buildings, waterways."
+                f"Unsupported feature_type '{feature_type}'. "
+                f"Supported types: {sorted(self.FEATURE_TAGS)}"
             )
-
-        self._resolve_bbox(operation, context)
 
     def execute(
         self,
@@ -50,18 +85,24 @@ class OSMRetrievalOperation(BaseOperation):
     ) -> OperationResult:
         self.validate(operation, context)
 
+        bbox = operation.parameters["bbox"]
         feature_type = operation.parameters["feature_type"]
-        bbox = self._resolve_bbox(operation, context)
 
         features = ox.features_from_bbox(
-            bbox=bbox,
+            bbox=tuple(bbox),
             tags=self.FEATURE_TAGS[feature_type],
         )
 
-        if not isinstance(features, gpd.GeoDataFrame):
-            raise TypeError(
-                "OSM retrieval must return a GeoDataFrame."
+        if features.empty:
+            raise RuntimeError(
+                f"No OSM features found for feature_type "
+                f"'{feature_type}'."
             )
+
+        features = features.reset_index()
+
+        if feature_type == "roads":
+            features = self._filter_major_roads(features)
 
         return OperationResult(
             id=operation.id,
@@ -73,36 +114,36 @@ class OSMRetrievalOperation(BaseOperation):
                 "feature_type": feature_type,
                 "feature_count": len(features),
                 "bbox": list(bbox),
-                "crs": str(features.crs) if features.crs else None,
             },
         )
 
-    @staticmethod
-    def _resolve_bbox(
-        operation: Operation,
-        context: ExecutionContext,
-    ) -> tuple[float, float, float, float]:
-        if "bbox" in operation.parameters:
-            bbox = operation.parameters["bbox"]
-        elif context.aoi.type == "bbox":
-            bbox = context.aoi.value
-        else:
+    def _filter_major_roads(
+        self,
+        features: gpd.GeoDataFrame,
+    ) -> gpd.GeoDataFrame:
+        if "highway" not in features.columns:
             raise ValueError(
-                "OSM retrieval requires a bbox parameter "
-                "or a bbox-type AOI."
+                "OSM road data does not contain a 'highway' column."
             )
 
-        if len(bbox) != 4:
-            raise ValueError(
-                "bbox must contain four values: "
-                "[west, south, east, north]."
+        major_roads = features[
+            features["highway"].apply(
+                self._is_major_road
+            )
+        ].copy()
+
+        if major_roads.empty:
+            raise RuntimeError(
+                "No major roads found in the requested area."
             )
 
-        west, south, east, north = map(float, bbox)
+        return major_roads
 
-        if west >= east or south >= north:
-            raise ValueError(
-                "Invalid bbox. Expected west < east and south < north."
+    def _is_major_road(self, value: object) -> bool:
+        if isinstance(value, list):
+            return any(
+                road_class in self.MAJOR_ROAD_CLASSES
+                for road_class in value
             )
 
-        return west, south, east, north
+        return value in self.MAJOR_ROAD_CLASSES

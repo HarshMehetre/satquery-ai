@@ -48,11 +48,45 @@ class Sentinel2RetrievalOperation(BaseOperation):
 
         bbox = operation.parameters["bbox"]
 
-        if len(bbox) != 4:
+        if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
             raise ValueError(
                 "bbox must contain four values: "
                 "[west, south, east, north]."
             )
+
+        west, south, east, north = bbox
+
+        if west >= east or south >= north:
+            raise ValueError(
+                "bbox must satisfy west < east and south < north."
+            )
+
+        start_date = operation.parameters["start_date"]
+        end_date = operation.parameters["end_date"]
+
+        if start_date > end_date:
+            raise ValueError(
+                "start_date must not be later than end_date."
+            )
+
+        max_cloud_coverage = operation.parameters.get(
+            "max_cloud_coverage",
+            30,
+        )
+
+        if not 0 <= max_cloud_coverage <= 100:
+            raise ValueError(
+                "max_cloud_coverage must be between 0 and 100."
+            )
+
+        width = operation.parameters.get("width", 256)
+        height = operation.parameters.get("height", 256)
+
+        if not isinstance(width, int) or width <= 0:
+            raise ValueError("width must be a positive integer.")
+
+        if not isinstance(height, int) or height <= 0:
+            raise ValueError("height must be a positive integer.")
 
     def execute(
         self,
@@ -93,7 +127,9 @@ class Sentinel2RetrievalOperation(BaseOperation):
             "auth/realms/CDSE/protocol/openid-connect/token"
         )
 
-        config.sh_base_url = "https://sh.dataspace.copernicus.eu"
+        config.sh_base_url = (
+            "https://sh.dataspace.copernicus.eu"
+        )
 
         data_collection = DataCollection.SENTINEL2_L2A.define_from(
             "s2l2a",
@@ -106,7 +142,10 @@ class Sentinel2RetrievalOperation(BaseOperation):
             input_data=[
                 SentinelHubRequest.input_data(
                     data_collection=data_collection,
-                    time_interval=(start_date, end_date),
+                    time_interval=(
+                        start_date,
+                        end_date,
+                    ),
                     maxcc=max_cloud_coverage / 100.0,
                 )
             ],
@@ -138,8 +177,14 @@ class Sentinel2RetrievalOperation(BaseOperation):
 
         if raster_array.ndim != 3:
             raise ValueError(
-                "Expected Sentinel-2 response with "
-                "three dimensions: height, width, bands."
+                "Expected Sentinel-2 response with three "
+                "dimensions: height, width, bands."
+            )
+
+        if raster_array.shape[2] != 2:
+            raise ValueError(
+                "Expected Sentinel-2 response to contain "
+                "exactly two bands: B4 and B8."
             )
 
         raster_array = np.transpose(
@@ -147,8 +192,6 @@ class Sentinel2RetrievalOperation(BaseOperation):
             (2, 0, 1),
         )
 
-        # Build the affine transform that maps raster pixels
-        # to the requested geographic bounding box.
         transform = from_bounds(
             bbox[0],
             bbox[1],
