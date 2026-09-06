@@ -1,9 +1,11 @@
+from typing import Any
+
 from app.executor.context import ExecutionContext
 from app.executor.dependency import DependencyResolver
 from app.registry.operations import OperationRegistry
+from app.schemas.operation import Operation
 from app.schemas.query import QueryPlan
 from app.schemas.result import ExecutionResult
-from app.schemas.operation import Operation
 
 
 class Executor:
@@ -17,11 +19,17 @@ class Executor:
             dependency_resolver or DependencyResolver()
         )
 
-    def execute(self, plan: QueryPlan) -> ExecutionResult:
+    def execute(
+        self,
+        plan: QueryPlan,
+        runtime_inputs: dict[str, Any] | None = None,
+    ) -> ExecutionResult:
         context = ExecutionContext(
             aoi=plan.aoi,
             inputs=plan.inputs,
+            runtime_inputs=runtime_inputs,
         )
+    
 
         ordered_operations = self.dependency_resolver.resolve(
             plan.operations
@@ -35,10 +43,7 @@ class Executor:
 
             handler.validate(operation, context)
 
-            result = handler.execute(
-                operation,
-                context,
-            )
+            result = handler.execute(operation, context)
 
             context.add_result(result)
 
@@ -50,13 +55,14 @@ class Executor:
 
     def _validate_inputs(
         self,
-        operation,
+        operation: Operation,
         context: ExecutionContext,
     ) -> None:
         for input_id in operation.inputs:
             if (
-                input_id not in context.inputs
-                and input_id not in context.results
+            input_id not in context.inputs
+            and input_id not in context.runtime_inputs
+            and input_id not in context.results
             ):
                 raise KeyError(
                     f"Input '{input_id}' required by operation "

@@ -1,4 +1,3 @@
-from typing import Type
 
 from app.operations.base import BaseOperation
 
@@ -9,12 +8,12 @@ class OperationRegistry:
     """
 
     def __init__(self) -> None:
-        self._operations: dict[str, Type[BaseOperation]] = {}
+        self._operations: dict[str, type[BaseOperation]] = {}
 
     def register(
         self,
         name: str,
-        operation_class: Type[BaseOperation],
+        operation_class: type[BaseOperation],
     ) -> None:
         """
         Register an operation implementation.
@@ -30,7 +29,7 @@ class OperationRegistry:
     def get(
         self,
         name: str,
-    ) -> Type[BaseOperation]:
+    ) -> type[BaseOperation]:
         """
         Retrieve an operation implementation by name.
         """

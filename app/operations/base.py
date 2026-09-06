@@ -20,7 +20,6 @@ class BaseOperation(ABC):
         Validate whether the operation can execute
         in the current context.
         """
-        pass
 
     @abstractmethod
     def execute(
@@ -31,4 +30,3 @@ class BaseOperation(ABC):
         """
         Execute the operation and return a structured result.
         """
-        pass

@@ -88,3 +88,31 @@ def test_add_evidence():
 
     assert len(context.evidence) == 1
     assert context.evidence[0] == evidence
+    
+def test_runtime_input() -> None:
+    context = ExecutionContext(
+        aoi=AOI(
+            type="place",
+            value="Pune",
+        ),
+    )
+
+    context.add_runtime_input(
+        "satellite_data",
+        {"test": "raster"},
+    )
+
+    assert context.get_runtime_input(
+        "satellite_data"
+    ) == {"test": "raster"}
+
+def test_missing_runtime_input_raises_error() -> None:
+    context = ExecutionContext(
+        aoi=AOI(
+            type="place",
+            value="Pune",
+        )
+    )
+
+    with pytest.raises(KeyError):
+        context.get_runtime_input("missing")

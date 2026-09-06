@@ -3,7 +3,7 @@ from app.executor.dependency import DependencyResolver
 from app.executor.executor import Executor
 
 __all__ = [
-    "ExecutionContext",
     "DependencyResolver",
+    "ExecutionContext",
     "Executor",
 ]

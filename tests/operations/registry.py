@@ -1,6 +1,10 @@
+from app.operations.satellite.retrieve import (
+    Sentinel2RetrievalOperation,
+)
 from app.registry.operations import OperationRegistry
 from tests.operations.mocks import (
     MockCombineOperation,
+    MockRasterSourceOperation,
     MockSourceOperation,
     MockTransformOperation,
 )
@@ -22,6 +26,16 @@ def create_mock_registry() -> OperationRegistry:
     registry.register(
         "mock_combine",
         MockCombineOperation,
+    )
+    
+    registry.register(
+        "mock_raster_source",
+        MockRasterSourceOperation,
+    )
+    
+    registry.register(
+        "get_satellite_imagery",
+        Sentinel2RetrievalOperation,
     )
 
     return registry

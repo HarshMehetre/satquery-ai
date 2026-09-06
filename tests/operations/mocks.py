@@ -1,6 +1,9 @@
+import numpy as np
+
 from app.executor.context import ExecutionContext
 from app.operations.base import BaseOperation
 from app.schemas.operation import Operation
+from app.schemas.raster import RasterData, RasterMetadata
 from app.schemas.result import OperationResult
 
 
@@ -121,4 +124,59 @@ class MockCombineOperation(BaseOperation):
             type=operation.type,
             data_type="json",
             data=combined_data,
+        )
+        
+class MockRasterSourceOperation(BaseOperation):
+    """Mock operation that produces a multiband RasterData object."""
+
+    def validate(
+        self,
+        operation: Operation,
+        context: ExecutionContext,
+    ) -> None:
+        if operation.inputs:
+            raise ValueError(
+                "MockRasterSourceOperation must not have inputs."
+            )
+
+    def execute(
+        self,
+        operation: Operation,
+        context: ExecutionContext,
+    ) -> OperationResult:
+        self.validate(operation, context)
+
+        red = np.array(
+            [
+                [0.2, 0.4],
+                [0.3, 0.5],
+            ],
+            dtype=np.float32,
+        )
+
+        nir = np.array(
+            [
+                [0.6, 0.8],
+                [0.7, 0.9],
+            ],
+            dtype=np.float32,
+        )
+
+        raster = RasterData(
+            data=np.stack([red, nir]),
+            bands=["B4", "B8"],
+            metadata=RasterMetadata(
+                crs="EPSG:4326",
+                width=2,
+                height=2,
+                count=2,
+                dtype="float32",
+            ),
+        )
+
+        return OperationResult(
+            id=operation.id,
+            type=operation.type,
+            data_type="raster",
+            data=raster,
         )

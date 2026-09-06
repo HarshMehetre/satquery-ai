@@ -1538,3 +1538,153 @@ The central architectural idea remains:
 > The planner defines the workflow.
 > The execution engine performs the analysis.
 > The evidence layer proves the result.**
+
+### M1 — Execution Foundation Progress
+
+#### Completed
+
+* **Core Pydantic schemas**
+
+  * `QueryPlan`
+  * `Operation`
+  * `DataInput`
+  * `AOI`
+  * `OutputSpec`
+  * `OperationResult`
+  * `ExecutionResult`
+  * `Evidence`
+
+* **Raster data abstraction**
+
+  * Added `RasterData`
+  * Added `RasterMetadata`
+  * Supports NumPy-based raster arrays
+  * Preserves CRS, dimensions, band information and raster metadata
+
+* **Operation execution architecture**
+
+  * Added `BaseOperation` interface
+  * Added `OperationRegistry`
+  * Added `ExecutionContext`
+  * Added dependency resolution through topological sorting
+  * Added execution engine through `Executor`
+
+* **Runtime input support**
+
+  * Execution context now supports runtime data injection
+  * Enables operations to consume dynamically retrieved raster/vector data without coupling the planner to storage or retrieval implementations
+
+* **Mock operations**
+
+  * Added mock source, transform and combine operations
+  * Added mock raster source for testing raster-processing pipelines
+
+* **Remote sensing**
+
+  * Implemented `NDVIOperation`
+  * Supports configurable Red and NIR bands
+  * Handles zero denominators safely
+  * Returns NDVI as a `RasterData` result
+
+* **Sentinel-2 retrieval**
+
+  * Integrated Sentinel-2 L2A retrieval through Sentinel Hub / Copernicus Data Space
+  * Configured CDSE OAuth authentication
+  * Added configurable AOI, temporal range, cloud-coverage limit and output resolution
+  * Currently retrieves B4 (Red) and B8 (NIR)
+  * Converts API output into the internal `RasterData` representation
+
+* **Integration testing**
+
+  * Added executor → raster source → NDVI integration test
+  * Added Sentinel-2 operation validation tests
+  * Added runtime input tests
+  * Added manual Sentinel-2 retrieval test script
+
+#### Current M1 Status
+
+```text
+[✓] Core schemas
+[✓] BaseOperation
+[✓] Operation Registry
+[✓] ExecutionContext
+[✓] Runtime inputs
+[✓] Dependency Resolver
+[✓] Executor
+[✓] Mock operations
+[✓] RasterData abstraction
+[✓] NDVI operation
+[✓] Sentinel-2 retrieval
+[ ] OSM retrieval
+[ ] GIS buffer operation
+[ ] GIS intersection operation
+[ ] Distance/proximity operation
+[ ] Area calculation
+[ ] Hero query integration
+```
+
+### Current Verified Pipeline
+
+The current implementation successfully executes the following pipeline:
+
+```text
+QueryPlan
+    ↓
+Dependency Resolver
+    ↓
+Executor
+    ↓
+Sentinel-2 Retrieval
+    ↓
+RasterData
+    ↓
+NDVI Operation
+    ↓
+NDVI Raster Result
+```
+
+A live Sentinel-2 retrieval has been verified against the Copernicus Data Space Ecosystem using Sentinel-2 L2A imagery.
+
+The current verified output is:
+
+```text
+Shape: (2, 256, 256)
+Bands: ['B4', 'B8']
+CRS: EPSG:4326
+Dtype: float32
+```
+
+### Next M1 Milestone
+
+The next implementation target is **OSM retrieval and GIS reasoning**.
+
+This will extend the execution engine from purely raster-based processing toward multi-source geospatial reasoning:
+
+```text
+Sentinel-2
+    │
+    ├── NDVI
+    │
+    └── Vegetation change
+             │
+             ▼
+          Filter
+             │
+             ├──────────────┐
+             │              │
+             ▼              ▼
+          OSM Roads     Road Filter
+                            │
+                            ▼
+                       3 km Buffer
+                            │
+                            ▼
+                     Spatial Intersection
+                            │
+                            ▼
+                       Final Result
+```
+
+This will form the foundation for the SatQuery-AI hero query:
+
+> **Find areas where vegetation decreased between 2024 and 2026 that are within 3 km of major roads.**

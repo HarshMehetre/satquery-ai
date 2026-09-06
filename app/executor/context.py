@@ -6,46 +6,48 @@ from app.schemas.result import OperationResult
 
 
 class ExecutionContext:
-    """
-    Runtime state shared by operations during query execution.
-    """
-
     def __init__(
         self,
         aoi: AOI,
         inputs: list[DataInput] | None = None,
+        runtime_inputs: dict[str, Any] | None = None,
     ) -> None:
         self.aoi = aoi
 
+        # Plan-level descriptions of external inputs.
         self.inputs: dict[str, DataInput] = {
             item.id: item
             for item in (inputs or [])
         }
 
+        # Actual runtime data associated with external inputs.
+        self.runtime_inputs: dict[str, Any] = runtime_inputs or {}
+
+        # Results produced by operations during execution.
         self.results: dict[str, OperationResult] = {}
 
         self.evidence: list[Evidence] = []
-
         self.metadata: dict[str, Any] = {}
 
-    def add_result(
+    def add_runtime_input(
         self,
-        result: OperationResult,
+        input_id: str,
+        data: Any,
     ) -> None:
-        """
-        Store the result of an executed operation.
-        """
+        self.runtime_inputs[input_id] = data
 
+    def get_runtime_input(self, input_id: str) -> Any:
+        if input_id not in self.runtime_inputs:
+            raise KeyError(
+                f"Runtime input '{input_id}' does not exist."
+            )
+
+        return self.runtime_inputs[input_id]
+
+    def add_result(self, result: OperationResult) -> None:
         self.results[result.id] = result
 
-    def get_result(
-        self,
-        result_id: str,
-    ) -> OperationResult:
-        """
-        Retrieve a previous operation result.
-        """
-
+    def get_result(self, result_id: str) -> OperationResult:
         if result_id not in self.results:
             raise KeyError(
                 f"Operation result '{result_id}' does not exist."
@@ -53,12 +55,5 @@ class ExecutionContext:
 
         return self.results[result_id]
 
-    def add_evidence(
-        self,
-        evidence: Evidence,
-    ) -> None:
-        """
-        Add provenance information to the execution context.
-        """
-
+    def add_evidence(self, evidence: Evidence) -> None:
         self.evidence.append(evidence)

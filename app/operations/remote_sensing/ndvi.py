@@ -5,6 +5,7 @@ import numpy as np
 from app.executor.context import ExecutionContext
 from app.operations.base import BaseOperation
 from app.schemas.operation import Operation
+from app.schemas.raster import RasterData
 from app.schemas.result import OperationResult
 
 
@@ -55,7 +56,12 @@ class NDVIOperation(BaseOperation):
         if input_id in context.results:
             source_data: Any = context.get_result(input_id).data
         else:
-            source_data = context.inputs[input_id]
+            source_data = context.get_runtime_input(input_id)
+
+        if not isinstance(source_data, RasterData):
+            raise TypeError(
+                "NDVI input must be RasterData."
+            )
 
         red_band = operation.parameters["red_band"]
         nir_band = operation.parameters["nir_band"]
@@ -70,32 +76,30 @@ class NDVIOperation(BaseOperation):
     def _calculate(
         self,
         operation: Operation,
-        source_data: Any,
+        source_data: RasterData,
         red_band: str,
         nir_band: str,
     ) -> OperationResult:
-        if not isinstance(source_data, dict):
-            raise TypeError(
-                "NDVI input data must be a dictionary containing bands."
+        if red_band not in source_data.bands:
+            raise KeyError(
+                f"Red band '{red_band}' not found in input raster."
             )
 
-        if red_band not in source_data:
+        if nir_band not in source_data.bands:
             raise KeyError(
-                f"Red band '{red_band}' not found in input data."
+                f"NIR band '{nir_band}' not found in input raster."
             )
 
-        if nir_band not in source_data:
-            raise KeyError(
-                f"NIR band '{nir_band}' not found in input data."
-            )
+        red_index = source_data.bands.index(red_band)
+        nir_index = source_data.bands.index(nir_band)
 
         red = np.asarray(
-            source_data[red_band],
+            source_data.data[red_index],
             dtype=np.float32,
         )
 
         nir = np.asarray(
-            source_data[nir_band],
+            source_data.data[nir_index],
             dtype=np.float32,
         )
 
@@ -113,11 +117,24 @@ class NDVIOperation(BaseOperation):
             where=denominator != 0,
         )
 
+        output_metadata = source_data.metadata.model_copy(
+            update={
+                "count": 1,
+                "dtype": str(ndvi.dtype),
+            }
+        )
+
+        result_data = RasterData(
+            data=ndvi[np.newaxis, ...],
+            bands=["NDVI"],
+            metadata=output_metadata,
+        )
+
         return OperationResult(
             id=operation.id,
             type=operation.type,
             data_type="raster",
-            data=ndvi,
+            data=result_data,
             metadata={
                 "red_band": red_band,
                 "nir_band": nir_band,
