@@ -1,9 +1,7 @@
 from app.executor.context import ExecutionContext
 from app.executor.dependency import DependencyResolver
-from app.executor.executor import Executor
 
 __all__ = [
     "DependencyResolver",
     "ExecutionContext",
-    "Executor",
 ]

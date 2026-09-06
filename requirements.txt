@@ -6,3 +6,6 @@ geopandas
 osmnx
 shapely
 pytest
+fastapi
+uvicorn
+httpx2

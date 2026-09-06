@@ -1953,3 +1953,32 @@ OSM Major Roads ──→ Project to CRS
 +- No external API calls are required by evidence tests
 +
 +**Status: Complete**
+
++## 11.5.5 — API Endpoint
++
++Implemented the FastAPI API layer for executing validated QueryPlans.
++
++### Completed
++
++- Added FastAPI application entry point in `app/main.py`
++- Added `POST /query` endpoint in `app/api/routes.py`
++- API endpoint uses the existing `Executor` and production operation registry
++- Added dependency injection for the Executor
++- Added API-specific serialization for execution results
++- Raster results expose bands and geospatial metadata without returning raw NumPy arrays
++- Vector results are serialized through GeoJSON-compatible `__geo_interface__`
++- Evidence is returned as JSON-serializable provenance records
++- API execution does not duplicate planner or executor logic
++- Added deterministic API tests using the mock operation registry
++- Added FastAPI/Uvicorn/httpx2 dependencies to `requirements.txt`
++- Fixed FastAPI `Depends` linting with an explicit Ruff `B008` suppression
++
++### Validation
++
++- API endpoint test passing
++- Full test suite passing
++- Ruff checks passing
++- API tests require no external Sentinel-2 or OSM services
++- Production registry is used by the API outside of tests
++
++**Status: Complete**

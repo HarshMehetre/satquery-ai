@@ -1,5 +1,14 @@
-
 from app.operations.base import BaseOperation
+from app.operations.gis.area import AreaOperation
+from app.operations.gis.buffer import BufferOperation
+from app.operations.gis.intersection import IntersectionOperation
+from app.operations.gis.osm import OSMRetrievalOperation
+from app.operations.gis.project import ProjectToCRSOperation
+from app.operations.remote_sensing.change import TemporalDifferenceOperation
+from app.operations.remote_sensing.filter import VegetationLossOperation
+from app.operations.remote_sensing.ndvi import NDVIOperation
+from app.operations.remote_sensing.polygonize import RasterPolygonizeOperation
+from app.operations.satellite.retrieve import Sentinel2RetrievalOperation
 
 
 class OperationRegistry:
@@ -51,9 +60,60 @@ class OperationRegistry:
 
         return name in self._operations
 
-    def list_operations(self) -> list[str]:
+    def list_operations(
+        self,
+    ) -> list[str]:
         """
         Return all registered operation names.
         """
 
         return list(self._operations.keys())
+
+
+def create_production_registry() -> OperationRegistry:
+    """Create a registry containing all implemented production operations."""
+
+    registry = OperationRegistry()
+
+    registry.register(
+        "get_satellite_imagery",
+        Sentinel2RetrievalOperation,
+    )
+    registry.register(
+        "calculate_ndvi",
+        NDVIOperation,
+    )
+    registry.register(
+        "project_to_crs",
+        ProjectToCRSOperation,
+    )
+    registry.register(
+        "buffer",
+        BufferOperation,
+    )
+    registry.register(
+        "intersection",
+        IntersectionOperation,
+    )
+    registry.register(
+        "area",
+        AreaOperation,
+    )
+    registry.register(
+        "get_osm_features",
+        OSMRetrievalOperation,
+    )
+    registry.register(
+        "temporal_difference",
+        TemporalDifferenceOperation,
+    )
+    registry.register(
+        "vegetation_loss",
+        VegetationLossOperation,
+    )
+    registry.register(
+        "raster_polygonize",
+        RasterPolygonizeOperation,
+    )
+
+    return registry
