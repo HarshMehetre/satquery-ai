@@ -54,6 +54,25 @@ class ExecutionContext:
             )
 
         return self.results[result_id]
+    
+    def get_input_result(self, input_id: str) -> OperationResult:
+        """Resolve an operation result or runtime input by ID."""
+        if input_id in self.results:
+            return self.results[input_id]
+
+        if input_id in self.runtime_inputs:
+            runtime_data = self.runtime_inputs[input_id]
+
+            if isinstance(runtime_data, OperationResult):
+                return runtime_data
+
+            raise TypeError(
+                f"Runtime input '{input_id}' must be an OperationResult."
+            )
+
+        raise KeyError(
+            f"Input '{input_id}' does not exist in execution context."
+        )
 
     def add_evidence(self, evidence: Evidence) -> None:
         self.evidence.append(evidence)

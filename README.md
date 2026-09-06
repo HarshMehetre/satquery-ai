@@ -1688,3 +1688,58 @@ Sentinel-2
 This will form the foundation for the SatQuery-AI hero query:
 
 > **Find areas where vegetation decreased between 2024 and 2026 that are within 3 km of major roads.**
+
+### M1 — GIS Reasoning Progress
+
+#### Completed
+
+- **OpenStreetMap retrieval**
+  - Added OSM feature retrieval through OSMnx
+  - Supports roads, buildings and waterways
+  - Returns GeoDataFrame-based vector data
+  - Preserves source CRS and feature metadata
+
+- **Coordinate reference system projection**
+  - Added `ProjectToCRSOperation`
+  - Supports explicit CRS transformation for vector data
+  - Enables metric-based spatial operations
+
+- **Buffer operation**
+  - Added `BufferOperation`
+  - Supports distance-based spatial buffering
+  - Requires projected input data for metric distances
+  - Used for road-proximity reasoning
+
+- **Spatial intersection**
+  - Added `IntersectionOperation`
+  - Computes intersections between vector layers
+  - Explicitly validates CRS compatibility
+  - Supports runtime inputs through the execution context
+
+- **Area calculation**
+  - Added `AreaOperation`
+  - Calculates total affected area from vector geometries
+  - Requires a projected CRS with metric units
+  - Returns area in both m² and km²
+
+- **Full GIS pipeline integration**
+  - Verified the complete GIS execution chain through the `Executor`
+  - Runtime vegetation-loss polygons can be combined with live/mock OSM road data
+  - Pipeline now supports the core spatial reasoning required by the hero query
+
+#### Verified GIS Pipeline
+
+```text
+OSM Roads
+    ↓
+Project to UTM
+    ↓
+3 km Buffer
+    ↓
+Vegetation-loss Polygons
+    ↓
+Spatial Intersection
+    ↓
+Area Calculation
+    ↓
+Affected Area

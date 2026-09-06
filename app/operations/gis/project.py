@@ -6,8 +6,8 @@ from app.schemas.operation import Operation
 from app.schemas.result import OperationResult
 
 
-class AreaOperation(BaseOperation):
-    """Calculate the total area of vector geometries."""
+class ProjectToCRSOperation(BaseOperation):
+    """Reproject vector geometries into a target coordinate reference system."""
 
     def validate(
         self,
@@ -16,7 +16,12 @@ class AreaOperation(BaseOperation):
     ) -> None:
         if len(operation.inputs) != 1:
             raise ValueError(
-                "AreaOperation requires exactly one input."
+                "ProjectToCRSOperation requires exactly one input."
+            )
+
+        if "target_crs" not in operation.parameters:
+            raise ValueError(
+                "Missing required parameter: 'target_crs'."
             )
 
     def execute(
@@ -31,40 +36,28 @@ class AreaOperation(BaseOperation):
 
         if input_result.data_type != "vector":
             raise TypeError(
-                "AreaOperation requires vector input."
+                "ProjectToCRSOperation requires vector input."
             )
 
         if not isinstance(input_result.data, gpd.GeoDataFrame):
             raise TypeError(
-                "AreaOperation requires a GeoDataFrame."
+                "ProjectToCRSOperation requires a GeoDataFrame."
             )
 
-        gdf = input_result.data
+        target_crs = operation.parameters["target_crs"]
 
-        if gdf.crs is None:
-            raise ValueError(
-                "AreaOperation requires an input CRS."
-            )
-
-        if gdf.crs.is_geographic:
-            raise ValueError(
-                "AreaOperation requires a projected CRS "
-                "with metric units."
-            )
-
-        total_area_m2 = float(gdf.geometry.area.sum())
+        projected = input_result.data.to_crs(target_crs)
 
         return OperationResult(
             id=operation.id,
             type=operation.type,
-            data_type="scalar",
-            data=total_area_m2,
+            data_type="vector",
+            data=projected,
             metadata={
-                "operation": "area",
-                "unit": "m²",
-                "feature_count": len(gdf),
-                "crs": str(gdf.crs),
-                "area_m2": total_area_m2,
-                "area_km2": total_area_m2 / 1_000_000,
+                "source_crs": str(input_result.data.crs)
+                if input_result.data.crs
+                else None,
+                "target_crs": str(projected.crs),
+                "feature_count": len(projected),
             },
         )
