@@ -1,5 +1,6 @@
 from typing import Any
 
+from app.evidence.builder import EvidenceBuilder
 from app.executor.context import ExecutionContext
 from app.executor.dependency import DependencyResolver
 from app.registry.operations import OperationRegistry
@@ -29,7 +30,6 @@ class Executor:
             inputs=plan.inputs,
             runtime_inputs=runtime_inputs,
         )
-    
 
         ordered_operations = self.dependency_resolver.resolve(
             plan.operations
@@ -47,6 +47,13 @@ class Executor:
 
             context.add_result(result)
 
+            evidence = EvidenceBuilder().build(
+                operation,
+                result,
+            )
+
+            context.add_evidence(evidence)
+
         return ExecutionResult(
             results=context.results,
             evidence=context.evidence,
@@ -60,9 +67,9 @@ class Executor:
     ) -> None:
         for input_id in operation.inputs:
             if (
-            input_id not in context.inputs
-            and input_id not in context.runtime_inputs
-            and input_id not in context.results
+                input_id not in context.inputs
+                and input_id not in context.runtime_inputs
+                and input_id not in context.results
             ):
                 raise KeyError(
                     f"Input '{input_id}' required by operation "

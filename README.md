@@ -1921,3 +1921,35 @@ OSM Major Roads ──→ Project to CRS
                            Intersection
                                 ↓
                               Area
+
++## 11.5.4 — Evidence Generation
++
++Implemented the evidence/provenance layer for executed QueryPlans.
++
++### Completed
++
++- Added `EvidenceBuilder` in `app/evidence/builder.py`
++- Evidence is generated from the executed `Operation` and its `OperationResult`
++- Evidence captures:
++  - data source
++  - source type
++  - acquisition date when available
++  - operation type
++  - operation parameters
++  - operation description when available
++- Wired evidence generation into `Executor`
++- Evidence is attached only after successful operation execution
++- Missing provenance metadata falls back to safe defaults rather than invented values
++- Hero pipeline now produces evidence for all executed operations
++- Verified Sentinel-2 and OSM retrieval provenance in the hero pipeline
++- Added focused unit and executor tests for evidence generation
++
++### Validation
++
++- Evidence builder tests passing
++- Executor evidence test passing
++- Hero pipeline evidence assertions passing
++- Evidence count matches the number of executed operations
++- No external API calls are required by evidence tests
++
++**Status: Complete**

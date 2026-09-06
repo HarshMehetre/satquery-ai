@@ -243,8 +243,10 @@ def test_hero_pipeline_executes_end_to_end() -> None:
         registry=create_mock_registry(),
     )
 
+    plan = create_hero_plan()
+
     result = executor.execute(
-        create_hero_plan(),
+        plan,
         runtime_inputs=runtime_inputs,
     )
 
@@ -316,3 +318,41 @@ def test_hero_pipeline_executes_end_to_end() -> None:
     assert area.data_type == "scalar"
     assert isinstance(area.data, float)
     assert area.data > 0
+    
+        # Evidence is generated for every executed operation.
+    assert len(result.evidence) == len(plan.operations)
+
+    # Retrieval operations carry their source provenance.
+    satellite_evidence = [
+        evidence
+        for evidence in result.evidence
+        if evidence.operation == "get_satellite_imagery"
+    ]
+
+    assert len(satellite_evidence) == 2
+    assert all(
+        evidence.source == "mock-sentinel-2"
+        for evidence in satellite_evidence
+    )
+
+    osm_evidence = [
+        evidence
+        for evidence in result.evidence
+        if evidence.operation == "get_osm_features"
+    ]
+
+    assert len(osm_evidence) == 1
+    assert osm_evidence[0].source == "mock-openstreetmap"
+
+    # Retrieval parameters are preserved in evidence.
+    satellite_start_dates = {
+        evidence.parameters["start_date"]
+        for evidence in satellite_evidence
+    }
+
+    assert satellite_start_dates == {
+        "2024-01-01",
+        "2026-01-01",
+    }
+
+    assert osm_evidence[0].parameters["feature_type"] == "roads"
