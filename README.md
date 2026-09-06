@@ -1743,3 +1743,95 @@ Spatial Intersection
 Area Calculation
     ↓
 Affected Area
+
+### 11.4.2 — Deterministic Hero Query Integration
+
+Implemented and validated the first complete end-to-end execution path for the SatQuery hero query:
+
+> **Find areas where vegetation decreased between 2024 and 2026 that are within 3 km of major roads.**
+
+#### Implemented Pipeline
+
+```text
+Sentinel-2 2024
+      │
+      ├──→ NDVI 2024 ───────┐
+      │                     │
+Sentinel-2 2026             ↓
+      │              Temporal Difference
+      └──→ NDVI 2026 ───────┘
+                            │
+                            ↓
+                     Vegetation Loss
+                            │
+                            ↓
+                    Raster Polygonize
+                            │
+                            ↓
+                      Project to UTM
+                            │
+OSM Major Roads             │
+      │                     │
+      ↓                     │
+ Project to UTM             │
+      │                     │
+      ↓                     │
+  3 km Buffer ──────────────┘
+                            │
+                            ↓
+                       Intersection
+                            │
+                            ↓
+                     Area Calculation
+```
+
+#### Integration Work Completed
+
+* Added deterministic hero-query integration test.
+* Added synthetic Sentinel-2 raster inputs for 2024 and 2026.
+* Added synthetic OSM road geometry.
+* Validated runtime input injection for raster and vector data.
+* Updated `ProjectToCRSOperation` to support runtime `GeoDataFrame` inputs.
+* Preserved existing `ProjectToCRSOperation` validation and metadata contracts.
+* Validated CRS transformation to EPSG:32643.
+* Validated vegetation-change detection.
+* Validated vegetation-loss extraction.
+* Validated raster-to-polygon conversion.
+* Validated 3 km road buffering.
+* Validated spatial intersection.
+* Validated final affected-area calculation.
+* Confirmed the complete operation dependency chain executes through the `Executor`.
+
+#### Validation
+
+```text
+pytest -q
+104 passed
+```
+
+Ruff:
+
+```text
+ruff check .
+All checks passed
+```
+
+Rasterio emits `PendingDeprecationWarning` messages originating from its internal `Affine` multiplication; these do not affect test results.
+
+#### Checkpoint Status
+
+* [x] Deterministic hero query executes end-to-end
+* [x] Raster runtime inputs supported
+* [x] Vector runtime inputs supported
+* [x] NDVI 2024/2026
+* [x] Temporal vegetation change
+* [x] Vegetation-loss extraction
+* [x] Raster polygonization
+* [x] CRS projection
+* [x] 3 km road buffer
+* [x] Spatial intersection
+* [x] Area calculation
+* [x] Full test suite passing
+* [x] Ruff clean
+
+**Checkpoint: 11.4.2 COMPLETE**

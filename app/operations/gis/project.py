@@ -7,7 +7,7 @@ from app.schemas.result import OperationResult
 
 
 class ProjectToCRSOperation(BaseOperation):
-    """Reproject vector geometries into a target coordinate reference system."""
+    """Project vector data into a target coordinate reference system."""
 
     def validate(
         self,
@@ -21,7 +21,7 @@ class ProjectToCRSOperation(BaseOperation):
 
         if "target_crs" not in operation.parameters:
             raise ValueError(
-                "Missing required parameter: 'target_crs'."
+                "ProjectToCRSOperation requires a 'target_crs' parameter."
             )
 
     def execute(
@@ -32,21 +32,28 @@ class ProjectToCRSOperation(BaseOperation):
         self.validate(operation, context)
 
         input_id = operation.inputs[0]
-        input_result = context.get_result(input_id)
 
-        if input_result.data_type != "vector":
-            raise TypeError(
-                "ProjectToCRSOperation requires vector input."
+        if input_id in context.results:
+            input_result = context.get_result(input_id)
+            data = input_result.data
+
+        elif input_id in context.runtime_inputs:
+            data = context.get_runtime_input(input_id)
+
+        else:
+            raise KeyError(
+                f"Input '{input_id}' does not exist in execution context."
             )
 
-        if not isinstance(input_result.data, gpd.GeoDataFrame):
+        if not isinstance(data, gpd.GeoDataFrame):
             raise TypeError(
-                "ProjectToCRSOperation requires a GeoDataFrame."
+                "ProjectToCRSOperation requires a vector input "
+                "as a GeoDataFrame."
             )
 
         target_crs = operation.parameters["target_crs"]
 
-        projected = input_result.data.to_crs(target_crs)
+        projected = data.to_crs(target_crs)
 
         return OperationResult(
             id=operation.id,
@@ -54,9 +61,7 @@ class ProjectToCRSOperation(BaseOperation):
             data_type="vector",
             data=projected,
             metadata={
-                "source_crs": str(input_result.data.crs)
-                if input_result.data.crs
-                else None,
+                "source_crs": str(data.crs),
                 "target_crs": str(projected.crs),
                 "feature_count": len(projected),
             },
