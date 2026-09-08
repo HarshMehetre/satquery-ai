@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 import numpy as np
 import pytest
 
@@ -216,7 +218,7 @@ def test_sentinel2_uses_aoi_bbox_not_operation_bbox(
     ]
 
     class MockRequest:
-        captured_kwargs: dict = {}
+        captured_kwargs: ClassVar[dict]
 
         @staticmethod
         def input_data(*args, **kwargs) -> object:

@@ -1982,3 +1982,77 @@ OSM Major Roads ──→ Project to CRS
 +- Production registry is used by the API outside of tests
 +
 +**Status: Complete**
+
++## Checkpoint 11.5.6.16 — Production Query Pipeline / End-to-End Retrieval Integration
++
++### Completed
++
++- Integrated the production `QueryService` with the executor and operation registry.
++- Verified a complete deterministic hero-query pipeline from resolved AOI through final spatial statistics.
++- Integrated the retrieval boundaries for:
++  - Sentinel-2 imagery
++  - OpenStreetMap road features
++- Verified composition of remote-sensing and GIS operations:
++  - NDVI calculation
++  - Temporal difference
++  - Vegetation-loss filtering
++  - Raster polygonization
++  - CRS projection
++  - Road buffering
++  - Spatial intersection
++  - Area calculation
++- Verified geospatial metadata propagation, including CRS and raster transforms.
++- Added an end-to-end integration test using deterministic synthetic Sentinel-2 and road data.
++- Verified evidence generation across retrieval, remote-sensing, and GIS operations.
++- Confirmed the pipeline executes without bypassing the production executor, validator, registry, or operation implementations.
++
++### Validation
++
++- `pytest -q` — all tests passed
++- `ruff check app tests scripts` — clean
++- End-to-end hero-query integration test — passed
++
++### Pipeline Verified
++
++```text
++Resolved AOI
++    ↓
++Sentinel-2 Retrieval
++    ↓
++NDVI × 2
++    ↓
++Temporal Difference
++    ↓
++Vegetation Loss
++    ↓
++Raster Polygonization
++    ↓
++CRS Projection
++    ↓
++OSM Road Retrieval
++    ↓
++Road Projection
++    ↓
++3 km Road Buffer
++    ↓
++Spatial Intersection
++    ↓
++Area Calculation
++    ↓
++Evidence
++```
++
++### Checklist
++
++- [x] Production QueryService wired to executor
++- [x] Resolved AOI used by retrieval boundaries
++- [x] Sentinel-2 retrieval integrated into query execution
++- [x] OSM retrieval integrated into query execution
++- [x] Remote-sensing → GIS operation composition verified
++- [x] CRS propagation verified
++- [x] Spatial buffer/intersection verified
++- [x] Area calculation verified
++- [x] Evidence generation verified
++- [x] End-to-end hero-query integration test added
++- [x] Full test suite passing
++- [x] Ruff validation passing
