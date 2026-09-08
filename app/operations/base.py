@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from app.executor.context import ExecutionContext
 from app.schemas.operation import Operation
@@ -9,6 +10,14 @@ class BaseOperation(ABC):
     """
     Base interface for all executable SatQuery operations.
     """
+    
+    @classmethod
+    def planner_metadata(cls) -> dict[str, Any]:
+        """Return metadata describing the operation to the query planner."""
+        return {
+            "type": cls.__name__,
+            "description": cls.__doc__ or "",
+        }
 
     @abstractmethod
     def validate(

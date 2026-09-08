@@ -66,3 +66,14 @@ class ProjectToCRSOperation(BaseOperation):
                 "feature_count": len(projected),
             },
         )
+        
+    @classmethod
+    def planner_metadata(cls) -> dict[str, object]:
+        return {
+            "description": "Reproject vector geometries to a target coordinate reference system.",
+            "parameters": {
+                "target_crs": "Target CRS identifier.",
+            },
+            "input_type": "vector",
+            "output_type": "vector",
+    }

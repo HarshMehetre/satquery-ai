@@ -68,3 +68,11 @@ class AreaOperation(BaseOperation):
                 "area_km2": total_area_m2 / 1_000_000,
             },
         )
+        
+    @classmethod
+    def planner_metadata(cls) -> dict[str, object]:
+        return {
+            "description": "Calculate the area of vector geometries.",
+            "input_type": "vector",
+            "output_type": "table",
+        }

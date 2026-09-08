@@ -31,7 +31,6 @@ class Sentinel2RetrievalOperation(BaseOperation):
             )
 
         required_parameters = {
-            "bbox",
             "start_date",
             "end_date",
         }
@@ -46,20 +45,7 @@ class Sentinel2RetrievalOperation(BaseOperation):
                 f"{sorted(missing_parameters)}"
             )
 
-        bbox = operation.parameters["bbox"]
-
-        if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
-            raise ValueError(
-                "bbox must contain four values: "
-                "[west, south, east, north]."
-            )
-
-        west, south, east, north = bbox
-
-        if west >= east or south >= north:
-            raise ValueError(
-                "bbox must satisfy west < east and south < north."
-            )
+        self._get_aoi_bbox(context)
 
         start_date = operation.parameters["start_date"]
         end_date = operation.parameters["end_date"]
@@ -95,7 +81,8 @@ class Sentinel2RetrievalOperation(BaseOperation):
     ) -> OperationResult:
         self.validate(operation, context)
 
-        bbox = operation.parameters["bbox"]
+        bbox = self._get_aoi_bbox(context)
+
         start_date = operation.parameters["start_date"]
         end_date = operation.parameters["end_date"]
 
@@ -244,6 +231,62 @@ class Sentinel2RetrievalOperation(BaseOperation):
                 "height": height,
             },
         )
+
+    @staticmethod
+    def _get_aoi_bbox(context: ExecutionContext) -> list[float]:
+        """Return the authoritative bbox from the resolved AOI."""
+
+        if not context.aoi.resolved:
+            raise ValueError(
+                "Sentinel-2 retrieval requires a resolved AOI."
+            )
+
+        if context.aoi.type != "bbox":
+            raise ValueError(
+                "Sentinel-2 retrieval requires a resolved bbox AOI."
+            )
+
+        bbox = context.aoi.value
+
+        if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
+            raise ValueError(
+                "Resolved AOI bbox must contain four values: "
+                "[west, south, east, north]."
+            )
+
+        west, south, east, north = bbox
+
+        if west >= east or south >= north:
+            raise ValueError(
+                "Invalid resolved AOI bbox: west must be less "
+                "than east and south must be less than north."
+            )
+
+        return list(bbox)
+
+    @classmethod
+    def planner_metadata(cls) -> dict[str, object]:
+        return {
+            "description": (
+                "Retrieve Sentinel-2 L2A satellite imagery for "
+                "the resolved AOI and requested time range."
+            ),
+            "parameters": {
+                "start_date": "Start of the imagery time range.",
+                "end_date": "End of the imagery time range.",
+                "cloud_percentage": (
+                    "Maximum acceptable cloud percentage."
+                ),
+                "width": "Output raster width.",
+                "height": "Output raster height.",
+            },
+            "input_type": "aoi",
+            "output_type": "raster",
+            "spatial_extent": (
+                "Uses the resolved AOI exclusively; "
+                "operation parameters must not define a bbox."
+            ),
+        }
 
     @staticmethod
     def _build_evalscript() -> str:

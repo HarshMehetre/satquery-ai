@@ -1,13 +1,26 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends
+from rasterio.transform import Affine
 
+from app.config.settings import settings
 from app.executor.executor import Executor
+from app.planner.factory import create_planner
+from app.planner.service import QueryService
+from app.planner.validator import QueryPlanValidator
 from app.registry import create_production_registry
-from app.schemas.query import QueryPlan
+from app.schemas.query import NaturalLanguageQuery, QueryPlan
 from app.schemas.result import ExecutionResult
 
 router = APIRouter()
+
+def serialize_raster_metadata(metadata) -> dict[str, Any]:
+    serialized = metadata.model_dump(mode="python")
+
+    if isinstance(serialized.get("transform"), Affine):
+        serialized["transform"] = list(serialized["transform"])
+
+    return serialized
 
 
 def get_executor() -> Executor:
@@ -38,12 +51,15 @@ def serialize_execution_result(
         data = operation_result.data
 
         if operation_result.data_type == "raster":
+            metadata = data.metadata.model_dump()
+
+            if data.metadata.transform is not None:
+                metadata["transform"] = list(data.metadata.transform)
+
             data = {
                 "type": "raster",
                 "bands": data.bands,
-                "metadata": data.metadata.model_dump(
-                    mode="json",
-                ),
+                "metadata": metadata,
             }
 
         elif operation_result.data_type == "vector":
@@ -66,3 +82,27 @@ def serialize_execution_result(
         ],
         "metadata": result.metadata,
     }
+    
+def get_query_service() -> QueryService:
+    registry = create_production_registry()
+
+    return QueryService(
+        planner=create_planner(
+            registry=registry,
+            settings=settings,
+        ),
+        validator=QueryPlanValidator(registry),
+        executor=Executor(registry),
+    )
+
+@router.post(
+    "/query/natural",
+    response_model=dict[str, Any],
+)
+def execute_natural_query(
+    request: NaturalLanguageQuery,
+    service: QueryService = Depends(get_query_service), # noqa: B008
+) -> dict[str, Any]:
+    result = service.execute(request.query)
+
+    return serialize_execution_result(result)

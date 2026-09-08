@@ -14,8 +14,8 @@ class AOI(BaseModel):
     """
 
     type: Literal["bbox", "polygon", "place"]
-
     value: Any
+    resolved: bool = True
 
 
 class TimeRange(BaseModel):
@@ -85,3 +85,10 @@ class QueryPlan(BaseModel):
     )
 
     output: OutputSpec
+    
+class NaturalLanguageQuery(BaseModel):
+    query: str = Field(
+        ...,
+        min_length=1,
+        description="Natural-language geospatial query.",
+    )

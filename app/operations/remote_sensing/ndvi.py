@@ -141,3 +141,15 @@ class NDVIOperation(BaseOperation):
                 "formula": "(NIR - Red) / (NIR + Red)",
             },
         )
+        
+    @classmethod
+    def planner_metadata(cls) -> dict[str, object]:
+        return {
+            "description": "Calculate NDVI from red and near-infrared raster bands.",
+            "parameters": {
+                "red_band": "Red band name.",
+                "nir_band": "Near-infrared band name.",
+            },
+            "input_type": "raster",
+            "output_type": "raster",
+        }

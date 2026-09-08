@@ -40,7 +40,6 @@ class OSMRetrievalOperation(BaseOperation):
             )
 
         required_parameters = {
-            "bbox",
             "feature_type",
         }
 
@@ -54,21 +53,7 @@ class OSMRetrievalOperation(BaseOperation):
                 f"{sorted(missing_parameters)}"
             )
 
-        bbox = operation.parameters["bbox"]
-
-        if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
-            raise ValueError(
-                "bbox must contain four values: "
-                "[west, south, east, north]."
-            )
-
-        west, south, east, north = bbox
-
-        if west >= east or south >= north:
-            raise ValueError(
-                "Invalid bbox: west must be less than east "
-                "and south must be less than north."
-            )
+        self._get_aoi_bbox(context)
 
         feature_type = operation.parameters["feature_type"]
 
@@ -85,7 +70,7 @@ class OSMRetrievalOperation(BaseOperation):
     ) -> OperationResult:
         self.validate(operation, context)
 
-        bbox = operation.parameters["bbox"]
+        bbox = self._get_aoi_bbox(context)
         feature_type = operation.parameters["feature_type"]
 
         features = ox.features_from_bbox(
@@ -117,6 +102,38 @@ class OSMRetrievalOperation(BaseOperation):
             },
         )
 
+    @staticmethod
+    def _get_aoi_bbox(context: ExecutionContext) -> list[float]:
+        """Return the authoritative bbox from the resolved AOI."""
+
+        if not context.aoi.resolved:
+            raise ValueError(
+                "OSM retrieval requires a resolved AOI."
+            )
+
+        if context.aoi.type != "bbox":
+            raise ValueError(
+                "OSM retrieval requires a resolved bbox AOI."
+            )
+
+        bbox = context.aoi.value
+
+        if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
+            raise ValueError(
+                "Resolved AOI bbox must contain four values: "
+                "[west, south, east, north]."
+            )
+
+        west, south, east, north = bbox
+
+        if west >= east or south >= north:
+            raise ValueError(
+                "Invalid resolved AOI bbox: west must be less "
+                "than east and south must be less than north."
+            )
+
+        return list(bbox)
+
     def _filter_major_roads(
         self,
         features: gpd.GeoDataFrame,
@@ -147,3 +164,21 @@ class OSMRetrievalOperation(BaseOperation):
             )
 
         return value in self.MAJOR_ROAD_CLASSES
+
+    @classmethod
+    def planner_metadata(cls) -> dict[str, object]:
+        return {
+            "description": (
+                "Retrieve OpenStreetMap features within "
+                "the resolved AOI."
+            ),
+            "parameters": {
+                "feature_type": "OSM feature category.",
+            },
+            "input_type": "aoi",
+            "output_type": "vector",
+            "spatial_extent": (
+                "Uses the resolved AOI exclusively; "
+                "operation parameters must not define a bbox."
+            ),
+        }

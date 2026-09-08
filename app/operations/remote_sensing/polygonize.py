@@ -114,3 +114,11 @@ class RasterPolygonizeOperation(BaseOperation):
                 else None,
             },
         )
+        
+    @classmethod
+    def planner_metadata(cls) -> dict[str, object]:
+        return {
+            "description": "Convert raster regions into vector polygons.",
+            "input_type": "raster",
+            "output_type": "vector",
+    }

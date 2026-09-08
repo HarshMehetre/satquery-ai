@@ -75,3 +75,14 @@ class BufferOperation(BaseOperation):
                 else None,
             },
         )
+        
+    @classmethod
+    def planner_metadata(cls) -> dict[str, object]:
+        return {
+            "description": "Create a buffer around vector geometries.",
+            "parameters": {
+                "distance": "Buffer distance in CRS units.",
+            },
+            "input_type": "vector",
+            "output_type": "vector",
+        }

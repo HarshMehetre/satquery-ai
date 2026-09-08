@@ -109,3 +109,11 @@ class TemporalDifferenceOperation(BaseOperation):
                 "later_input": later_id,
             },
         )
+        
+    @classmethod
+    def planner_metadata(cls) -> dict[str, object]:
+        return {
+            "description": "Calculate the difference between two temporal raster results.",
+            "input_type": "raster",
+            "output_type": "raster",
+    }

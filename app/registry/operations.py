@@ -68,6 +68,16 @@ class OperationRegistry:
         """
 
         return list(self._operations.keys())
+    
+    def get_catalog(self) -> list[dict[str, object]]:
+        """Return planner-facing metadata for all registered operations."""
+        return [
+            {
+            "type": operation_type,
+            **operation_class.planner_metadata(),
+            }
+            for operation_type, operation_class in self._operations.items()
+        ]
 
 
 def create_production_registry() -> OperationRegistry:

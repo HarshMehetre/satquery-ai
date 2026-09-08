@@ -9,3 +9,6 @@ pytest
 fastapi
 uvicorn
 httpx2
+openai
+google-genai
+geopy

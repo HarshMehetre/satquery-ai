@@ -82,3 +82,14 @@ class VegetationLossOperation(BaseOperation):
                 "condition": "change <= threshold",
             },
         )
+        
+    @classmethod
+    def planner_metadata(cls) -> dict[str, object]:
+        return {
+            "description": "Identify vegetation-loss pixels using a configured threshold.",
+            "parameters": {
+            "threshold": "Vegetation-change threshold.",
+        },
+        "input_type": "raster",
+        "output_type": "raster",
+    }

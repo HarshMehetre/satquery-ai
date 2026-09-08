@@ -100,3 +100,11 @@ class IntersectionOperation(BaseOperation):
         raise KeyError(
             f"Input '{input_id}' does not exist in execution context."
         )
+        
+    @classmethod
+    def planner_metadata(cls) -> dict[str, object]:
+        return {
+            "description": "Calculate the spatial intersection of vector geometries.",
+            "input_type": "vector",
+            "output_type": "vector",
+        }
