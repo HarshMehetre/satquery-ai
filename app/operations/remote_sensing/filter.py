@@ -25,6 +25,13 @@ class VegetationLossOperation(BaseOperation):
                 "Missing required parameter: 'threshold'."
             )
 
+        direction = operation.parameters.get("direction", "decrease")
+
+        if direction not in {"decrease", "increase"}:
+            raise ValueError(
+                "direction must be either 'decrease' or 'increase'."
+            )
+
     def execute(
         self,
         operation: Operation,
@@ -47,8 +54,12 @@ class VegetationLossOperation(BaseOperation):
 
         input_raster = input_result.data
         threshold = float(operation.parameters["threshold"])
+        direction = operation.parameters.get("direction", "decrease")
 
-        loss_mask = input_raster.data <= threshold
+        if direction == "decrease":
+            loss_mask = input_raster.data <= -threshold
+        else:
+            loss_mask = input_raster.data >= threshold
 
         loss_mask = loss_mask.astype(np.uint8)
 
@@ -60,8 +71,8 @@ class VegetationLossOperation(BaseOperation):
             bounds=input_raster.metadata.bounds,
             width=input_raster.metadata.width,
             height=input_raster.metadata.height,
-            count=input_raster.metadata.count,
-            dtype=str(loss_mask.dtype),
+            count=1,
+            dtype="uint8",
         )
 
         raster = RasterData(
@@ -79,17 +90,23 @@ class VegetationLossOperation(BaseOperation):
                 "operation": "vegetation_loss",
                 "input": input_id,
                 "threshold": threshold,
-                "condition": "change <= threshold",
+                "direction": direction,
+                "condition": (
+                    "change <= -threshold"
+                    if direction == "decrease"
+                    else "change >= threshold"
+                ),
             },
         )
         
     @classmethod
     def planner_metadata(cls) -> dict[str, object]:
         return {
-            "description": "Identify vegetation-loss pixels using a configured threshold.",
+            "description": "Identify vegetation-loss pixels using a configured change threshold.",
             "parameters": {
-            "threshold": "Vegetation-change threshold.",
-        },
-        "input_type": "raster",
-        "output_type": "raster",
-    }
+                "threshold": "Minimum absolute vegetation change required.",
+                "direction": "Expected change direction: decrease or increase.",
+            },
+            "input_type": "raster",
+            "output_type": "raster",
+        }

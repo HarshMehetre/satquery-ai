@@ -2056,3 +2056,72 @@ OSM Major Roads ──→ Project to CRS
 +- [x] End-to-end hero-query integration test added
 +- [x] Full test suite passing
 +- [x] Ruff validation passing
+
++## Checkpoint 11.5.6.17 — Production Retrieval Integration
++
++### Completed
++
++- Replaced mocked retrieval operations in the end-to-end pipeline with the real production retrieval implementations.
++- Mocked only external service responses:
++  - Copernicus Sentinel-2 API
++  - OpenStreetMap/OSMnx feature retrieval
++- Verified Sentinel-2 retrieval using the resolved AOI boundary.
++- Verified Sentinel-2 request construction, including:
++  - AOI bounding box
++  - temporal range
++  - cloud-cover constraint
++  - output dimensions
++  - Sentinel-2 L2A data collection
++- Verified Sentinel-2 band conversion and raster construction.
++- Verified OSM road retrieval and major-road filtering.
++- Verified CRS and geospatial metadata propagation through the production pipeline.
++- Fixed vegetation-loss semantics so signed temporal change is interpreted correctly:
++  - decrease: `change <= -threshold`
++  - increase: `change >= threshold`
++- Added focused tests for vegetation-loss direction and threshold behavior.
++- Verified the production retrieval operations compose correctly with the existing remote-sensing and GIS operations.
++
++### Validation
++
++- `pytest -q` — all tests passed
++- `ruff check app tests scripts` — clean
++- Production retrieval integration test — passed
++
++### Architecture Verified
++
++```text
++Stub Planner
++     ↓
++Production QueryService
++     ↓
++Production Executor
++     ↓
++Production OperationRegistry
++     ↓
++Real Sentinel-2 Operation ──→ mocked Copernicus response
++Real OSM Operation ─────────→ mocked OSM response
++     ↓
++NDVI / Temporal Difference / Vegetation Loss
++     ↓
++Polygonize / Projection
++     ↓
++Buffer / Intersection / Area
++     ↓
++Evidence
++```
++
++### Checklist
++
++- [x] Real Sentinel-2 retrieval operation integrated
++- [x] Real OSM retrieval operation integrated
++- [x] External network responses isolated behind mocks
++- [x] Sentinel-2 request construction verified
++- [x] Sentinel-2 raster construction verified
++- [x] OSM feature retrieval verified
++- [x] Major-road filtering verified
++- [x] CRS propagation verified
++- [x] Vegetation-loss threshold semantics corrected
++- [x] Vegetation-loss unit tests added
++- [x] Production end-to-end pipeline verified
++- [x] Full test suite passing
++- [x] Ruff validation passing

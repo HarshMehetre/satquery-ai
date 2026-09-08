@@ -170,7 +170,7 @@ def test_vegetation_loss_supports_significant_loss_threshold() -> None:
     context = create_context(create_raster(change))
 
     result = VegetationLossOperation().execute(
-        create_operation(threshold=-0.2),
+        create_operation(threshold=0.2),
         context,
     )
 
@@ -232,11 +232,11 @@ def test_vegetation_loss_metadata() -> None:
     context = create_context(create_raster(change))
 
     result = VegetationLossOperation().execute(
-        create_operation(threshold=-0.2),
+        create_operation(threshold=0.2),
         context,
     )
 
     assert result.metadata["operation"] == "vegetation_loss"
     assert result.metadata["input"] == "vegetation_change"
-    assert result.metadata["threshold"] == -0.2
-    assert result.metadata["condition"] == "change <= threshold"
+    assert result.metadata["threshold"] == 0.2
+    assert result.metadata["condition"] == "change <= -threshold"
